@@ -6,7 +6,7 @@
 #include "esp_bt.h"
 #include "esp_bt_main.h"
 
-#define DEVICE_NAME "k"      // BLE Device Name
+#define DEVICE_NAME "niebieskizab"      // BLE Device Name
 #define MANUFACTURER "MC"    // BLE Manufacturer
 
 // Access Point credentials
@@ -17,7 +17,7 @@ const char* ap_password = "12345678";
 WiFiServer server(80);
 
 // BLE Keyboard initialization with shortened names
-BleKeyboard bleKeyboard(DEVICE_NAME, MANUFACTURER, 100);
+BleKeyboard bleKeyboard(DEVICE_NAME, MANUFACTURER, 69);
 
 // Embedded and minified HTML content
 const char index_html[] PROGMEM = R"rawliteral(
@@ -52,7 +52,10 @@ void parseAndExecuteSequence(const char* sequence);
 void executeCommand(const char* command);
 void pressKeys(const char* keys);
 void pressKey(const char* key);
+void typeText(const char* text); // New function to type text with delay
 String urlDecode(String input);
+
+bool shiftPressed = false;
 
 void setup() {
   // Initialize Serial Monitor
@@ -136,7 +139,7 @@ void loop() {
 }
 
 void parseAndExecuteSequence(const char* sequence) {
-  char seqCopy[256];
+  char seqCopy[512]; // Increased buffer size
   strncpy(seqCopy, sequence, sizeof(seqCopy) - 1);
   seqCopy[sizeof(seqCopy) - 1] = '\0';
   char* command = strtok(seqCopy, ";");
@@ -149,7 +152,7 @@ void parseAndExecuteSequence(const char* sequence) {
 }
 
 void executeCommand(const char* command) {
-  char cmd[256];
+  char cmd[512]; // Increased buffer size
   strncpy(cmd, command, sizeof(cmd) - 1);
   cmd[sizeof(cmd) - 1] = '\0';
 
@@ -173,17 +176,18 @@ void executeCommand(const char* command) {
       }
       Serial.print("Typing text: ");
       Serial.println(text);
-      bleKeyboard.print(text);
+      typeText(text); // Use the new function
     }
   } else {
     // Treat any other input as text to type
     Serial.print("Typing text: ");
     Serial.println(command);
-    bleKeyboard.print(command);
+    typeText(command); // Use the new function
   }
 }
 
 void pressKeys(const char* keys) {
+  shiftPressed = false;
   char keysCopy[256];
   strncpy(keysCopy, keys, sizeof(keysCopy) - 1);
   keysCopy[sizeof(keysCopy) - 1] = '\0';
@@ -194,7 +198,7 @@ void pressKeys(const char* keys) {
     pressKey(key);
     key = strtok(NULL, "+");
   }
-  delay(100);
+  delay(20); // Added delay between key combinations
   bleKeyboard.releaseAll();
 }
 
@@ -203,16 +207,47 @@ void pressKey(const char* key) {
     bleKeyboard.press(KEY_LEFT_CTRL);
   } else if (strcasecmp(key, "alt") == 0) {
     bleKeyboard.press(KEY_LEFT_ALT);
+  } else if (strcasecmp(key, "shift") == 0) {
+    if (!shiftPressed) {
+      bleKeyboard.press(KEY_LEFT_SHIFT);
+      shiftPressed = true;
+    }
   } else if (strcasecmp(key, "gui") == 0 || strcasecmp(key, "win") == 0 || strcasecmp(key, "windows") == 0) {
     bleKeyboard.press(KEY_LEFT_GUI);
   } else if (strcasecmp(key, "enter") == 0 || strcasecmp(key, "return") == 0) {
     bleKeyboard.press(KEY_RETURN);
   } else if (strlen(key) == 1) {
     // Handle single-character keys
-    bleKeyboard.press(key[0]);
+    char c = key[0];
+    if (c >= 'A' && c <= 'Z') {
+      if (!shiftPressed) {
+        bleKeyboard.press(KEY_LEFT_SHIFT);
+        shiftPressed = true;
+      }
+      bleKeyboard.press(c + 32); // Convert to lowercase ASCII
+    } else {
+      bleKeyboard.press(c);
+    }
   } else {
     Serial.print("Unknown key: ");
     Serial.println(key);
+  }
+}
+
+void typeText(const char* text) {
+  size_t len = strlen(text);
+  for (size_t i = 0; i < len; i++) {
+    char c = text[i];
+    // Handle uppercase letters
+    if (c >= 'A' && c <= 'Z') {
+      bleKeyboard.press(KEY_LEFT_SHIFT);
+      bleKeyboard.press(c + 32); // Convert to lowercase ASCII
+      delay(20);
+      bleKeyboard.releaseAll();
+    } else {
+      bleKeyboard.write(c);
+      delay(20);
+    }
   }
 }
 
