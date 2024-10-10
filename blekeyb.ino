@@ -21,14 +21,16 @@ BleKeyboard bleKeyboard(DEVICE_NAME, MANUFACTURER, 69);
 
 // Embedded and minified HTML content
 const char index_html[] PROGMEM = R"rawliteral(
-<!DOCTYPE html><html><body><h1>ESP32 Keyboard</h1><div><input type="text" id="command" placeholder="Enter command"><button id="addStep">Add Step</button></div><h2>Steps:</h2><ul id="stepsList"></ul><button id="executeSteps">Execute Steps</button><p id="status"></p><script>
+<!DOCTYPE html><html><body><h1>ESP32 Keyboard</h1><div><input type="text" id="command" placeholder="Enter command"><input type="number" id="loopCount" placeholder="Loop count" min="1" value="1"><button id="addStep">Add Step</button></div><h2>Steps:</h2><ul id="stepsList"></ul><button id="executeSteps">Execute Steps</button><p id="status"></p><script>
 var steps=[];
 document.getElementById('addStep').addEventListener('click',function(){
   var cmd=document.getElementById('command').value.trim();
-  if(cmd){
-    steps.push(cmd);
+  var loopCount=document.getElementById('loopCount').value.trim();
+  if(cmd && loopCount > 0){
+    var step={command: cmd, loop: loopCount};
+    steps.push(step);
     var li=document.createElement('li');
-    li.textContent=cmd+' ';
+    li.textContent=cmd+' (x'+loopCount+') ';
     var removeBtn=document.createElement('button');
     removeBtn.textContent='Remove';
     removeBtn.addEventListener('click',function(){
@@ -39,11 +41,12 @@ document.getElementById('addStep').addEventListener('click',function(){
     li.appendChild(removeBtn);
     document.getElementById('stepsList').appendChild(li);
     document.getElementById('command').value='';
+    document.getElementById('loopCount').value='1';
   }
 });
 document.getElementById('executeSteps').addEventListener('click',function(){
   if(steps.length>0){
-    var sequence=steps.join(';');
+    var sequence=steps.map(step => `${step.command}:${step.loop}`).join(';');
     fetch('/send',{
       method:'POST',
       headers:{'Content-Type':'application/x-www-form-urlencoded'},
@@ -152,18 +155,34 @@ void loop() {
 }
 
 void parseAndExecuteSequence(const char* sequence) {
-  char seqCopy[1024]; // Increased buffer size
+  char seqCopy[1024]; // Buffer size for copying the sequence
   strncpy(seqCopy, sequence, sizeof(seqCopy) - 1);
   seqCopy[sizeof(seqCopy) - 1] = '\0';
   char* saveptr1;
   char* command = strtok_r(seqCopy, ";", &saveptr1);
+
   while (command != NULL) {
     Serial.print("Executing command: ");
     Serial.println(command);
-    executeCommand(command);
+
+    // Split the command into the actual command and the loop count
+    char* loopCountStr = strchr(command, ':');
+    int loopCount = 1;
+    if (loopCountStr != NULL) {
+      *loopCountStr = '\0';  // Split the command and loop count
+      loopCount = atoi(loopCountStr + 1);  // Parse the loop count
+      if (loopCount < 1) loopCount = 1; // Default to 1 if invalid
+    }
+
+    // Execute the command for the specified loop count
+    for (int i = 0; i < loopCount; i++) {
+      executeCommand(command);
+    }
+
     command = strtok_r(NULL, ";", &saveptr1);
   }
 }
+
 
 void executeCommand(const char* command) {
   char cmd[1024]; // Increased buffer size
