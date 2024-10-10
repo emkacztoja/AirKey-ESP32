@@ -6,7 +6,7 @@
 #include "esp_bt.h"
 #include "esp_bt_main.h"
 
-#define DEVICE_NAME "niebieskizab" // BLE Device Name
+#define DEVICE_NAME "blutuf klawa" // BLE Device Name
 #define MANUFACTURER "MC"          // BLE Manufacturer
 
 // Access Point credentials
@@ -224,7 +224,7 @@ void pressKeys(const char* keys) {
     pressKey(key);
     key = strtok_r(NULL, "+", &saveptr3);
   }
-  delay(80); // Adjust delay as needed
+  delay(125); // Adjust delay as needed
   bleKeyboard.releaseAll();
 }
 
