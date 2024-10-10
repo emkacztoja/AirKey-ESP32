@@ -224,7 +224,7 @@ void pressKeys(const char* keys) {
     pressKey(key);
     key = strtok_r(NULL, "+", &saveptr3);
   }
-  delay(80); // Adjust delay as needed
+  delay(120); // Adjust delay as needed
   bleKeyboard.releaseAll();
 }
 
