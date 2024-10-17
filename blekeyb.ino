@@ -21,8 +21,15 @@ BleKeyboard bleKeyboard(DEVICE_NAME, MANUFACTURER, 69);
 
 // Embedded and minified HTML content
 const char index_html[] PROGMEM = R"rawliteral(
-<!DOCTYPE html><html><body><h1>ESP32 Keyboard</h1><div><input type="text" id="command" placeholder="Enter command"><button id="addStep">Add Step</button></div><h2>Steps:</h2><ul id="stepsList"></ul><button id="executeSteps">Execute Steps</button><p id="status"></p><script>
+<!DOCTYPE html><html><body><h1>ESP32 Keyboard</h1>
+<div><input type="text" id="command" placeholder="Enter command"><button id="addStep">Add Step</button></div>
+<h2>Steps:</h2><ul id="stepsList"></ul>
+<button id="executeSteps">Execute Steps</button>
+<button id="clearSteps">Clear Steps</button>
+<p id="status"></p>
+<script>
 var steps=[];
+
 document.getElementById('addStep').addEventListener('click',function(){
   var cmd=document.getElementById('command').value.trim();
   if(cmd){
@@ -41,6 +48,7 @@ document.getElementById('addStep').addEventListener('click',function(){
     document.getElementById('command').value='';
   }
 });
+
 document.getElementById('executeSteps').addEventListener('click',function(){
   if(steps.length>0){
     var sequence=steps.join(';');
@@ -50,12 +58,16 @@ document.getElementById('executeSteps').addEventListener('click',function(){
       body:'sequence='+encodeURIComponent(sequence)
     }).then(r=>r.text()).then(d=>{
       document.getElementById('status').innerText=d;
-      steps=[];
-      document.getElementById('stepsList').innerHTML='';
     });
   }else{
     alert('No steps to execute');
   }
+});
+
+document.getElementById('clearSteps').addEventListener('click',function(){
+  steps=[];
+  document.getElementById('stepsList').innerHTML='';
+  document.getElementById('status').innerText = "Steps cleared.";
 });
 </script></body></html>
 )rawliteral";
@@ -224,7 +236,7 @@ void pressKeys(const char* keys) {
     pressKey(key);
     key = strtok_r(NULL, "+", &saveptr3);
   }
-  delay(125); // Adjust delay as needed
+  delay(350); // Adjust delay as needed
   bleKeyboard.releaseAll();
 }
 
@@ -266,7 +278,6 @@ void pressKey(const char* key) {
   }
 }
 
-
 void typeText(const char* text) {
   size_t len = strlen(text);
   for (size_t i = 0; i < len; i++) {
@@ -275,11 +286,11 @@ void typeText(const char* text) {
     if (c >= 'A' && c <= 'Z') {
       bleKeyboard.press(KEY_LEFT_SHIFT);
       bleKeyboard.press(c + 32); // Convert to lowercase ASCII
-      delay(20);
+      delay(50);
       bleKeyboard.releaseAll();
     } else {
       bleKeyboard.write(c);
-      delay(20);
+      delay(50);
     }
   }
 }
