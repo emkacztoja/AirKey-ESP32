@@ -16,4 +16,4 @@ I wanted to create something similar to rubber ducky, but i’m still waiting on
 - f4
 
 # Steps files:
-Steps file is essentially .txt file that you import steps from. For example see example.txt
+Steps file is essentially .txt file that you import steps from. For an example see example.txt
