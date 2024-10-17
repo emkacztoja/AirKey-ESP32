@@ -1,0 +1,5 @@
+press win+r
+cmd
+press enter
+start https://code.emkacz.pl
+press enter
