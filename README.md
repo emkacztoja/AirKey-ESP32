@@ -1,8 +1,8 @@
-# Virtual ESP32 Keyboard
+# AirKey ESP32
 
-Program which allows you to connect one device via Bluetooth and another via WiFi to ESP32 and then send keystrokes using a web interface hosted on `192.168.4.1`.
+AirKey is an ESP32-based virtual keyboard that allows you to connect one device via Bluetooth and another via WiFi. You can then send keystrokes using a web interface hosted on `192.168.4.1`.
 
-I wanted to create something similar to Rubber Ducky, but I’m still waiting on my USB connectors to arrive so I decided to make something like this lol.
+I wanted to create something similar to Rubber Ducky, but I’m still waiting on my USB connectors to arrive so I decided to make something like this instead.
 
 ## List of keys:
 
